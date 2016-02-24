@@ -1,0 +1,89 @@
+<?php
+
+/**
+ * Implementation of hook_menu
+ * url with two arguments.
+ * $api as first argument and $nid as second argument.
+ */
+function caas_menu(){
+	$items = array();
+  $items['page_json/%/%'] = array(
+    'title' => t('My form'),
+    'page callback' => 'content_as_service',
+    'page arguments' => array(1,2),
+    'access callback' => 'siteapi_custom_access',
+    'description' => t('Page AS JSON data'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Access callback for page access.
+ *
+ */
+function siteapi_custom_access() {
+	$api = check_plain(arg(1));
+	if($api == variable_get('siteapikey','')){
+		return TRUE;
+	}
+}
+
+/**
+ * Menu page callback for providing json data
+ * @param string $api
+ * @param integer $nid
+ */
+function content_as_service( $api = NULL, $nid = NULL){
+	//Check for numeric condition
+	if(is_numeric(arg(2))){
+		$node = node_load(arg(2));
+		//check for node type and node exists.
+		if(isset($node->nid) && $node->type == 'page'){
+			//output of the node as json object,
+			drupal_json_output($node);
+		}
+		else{
+			//when condition is false goto access denied page.
+			drupal_access_denied();
+		}
+	}
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter
+ * @param array $form
+ * @param array $form_state
+ * @param string $form_id
+ */
+function caas_form_system_site_information_settings_alter(&$form, &$form_state, $form_id){
+	$form['site_api_details'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Site API Details'),
+			'#collapsible' => FALSE,
+			'#collapsed' => FALSE,
+	);
+	$api_value = variable_get('siteapikey',t('No API Key yet'));
+	 $form['site_api_details']['siteapikey'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Site API Key'),
+	 	'#default_value' => check_plain($api_value),
+    '#required' => TRUE, // Added
+  );
+  $form['#submit'][] = 'site_api_submit';
+
+  $form['actions']['submit']['#value'] = t('Update Configuration');
+  //print  '<pre>'. print_r($form,TRUE).'</pre>';
+	//exit;
+	return $form;
+
+}
+
+/**
+ * Custom submit callback for drupal set message.
+ * @param array $form
+ * @param array $form_state
+ */
+function site_api_submit($form, &$form_state){
+	drupal_set_message(t('Site API Key is submitted as @siteapikey', array('@siteapikey'=> $form_state['values']['siteapikey'])));
+}

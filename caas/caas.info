@@ -1,0 +1,10 @@
+name = Content As a Service
+description = Enables Content as a service
+package = Jk Custom
+core = 7.x
+
+; Information added by Jk packaging script on 2016-02-03
+version = "7.42"
+project = "jk"
+datestamp = "1454517955"
+
